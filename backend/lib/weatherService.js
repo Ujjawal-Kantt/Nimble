@@ -8,8 +8,6 @@ async function getWeather(city) {
 
     try {
         const apiKey = process.env.OPENWEATHER_API_KEY;
-        console.log("Using API key:", process.env.OPENWEATHER_API_KEY);
-
         const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
 
         const response = await axios.get(url);
@@ -24,14 +22,7 @@ async function getWeather(city) {
             windSpeed: `${data.wind.speed} m/s`
         };
 
-        return `
-🌤️ Weather in **${weatherInfo.location}**:
-- Temperature: ${weatherInfo.temperature}
-- Feels Like: ${weatherInfo.feelsLike}
-- Condition: ${weatherInfo.description}
-- Humidity: ${weatherInfo.humidity}
-- Wind Speed: ${weatherInfo.windSpeed}
-        `.trim();
+        return weatherInfo;
     } catch (error) {
         console.error('Error fetching weather:', error.message);
         throw new Error('Could not fetch weather data. Please check the city name.');
