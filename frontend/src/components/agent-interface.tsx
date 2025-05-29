@@ -4,7 +4,7 @@ import { ParticleBackground } from "@/components/particle-background";
 import { CommandInput } from "@/components/command-input";
 import { ResponseArea } from "@/components/response-area";
 import { AudioFeedback } from "@/components/audio-feedback";
-import { Message } from "@/types/message";
+import { Message } from "./ui/message";
 
 export function AgentInterface() {
   const [messages, setMessages] = useState<Message[]>([
