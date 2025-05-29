@@ -3,7 +3,10 @@ import { AgentStatus } from "@/components/agent-status";
 import { ParticleBackground } from "@/components/particle-background";
 import { CommandInput } from "@/components/command-input";
 import { ResponseArea } from "@/components/response-area";
-import { AudioFeedback } from "@/components/audio-feedback";
+import {
+  AudioFeedback,
+  AudioFeedbackHandles,
+} from "@/components/audio-feedback";
 import { Message } from "./ui/message";
 
 export function AgentInterface() {
@@ -17,7 +20,32 @@ export function AgentInterface() {
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const audioFeedbackRef = useRef<AudioFeedback>(null);
+  const audioFeedbackRef = useRef<AudioFeedbackHandles>(null);
+
+  // -- Text to Speech helper --
+  const speak = (text: string) => {
+    if (!("speechSynthesis" in window)) {
+      console.warn("Speech Synthesis not supported");
+      return;
+    }
+    // Cancel any ongoing speech to avoid overlaps
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.pitch = 1;
+    utterance.rate = 1;
+    utterance.volume = 1;
+
+    // Pick a preferred voice (optional)
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find((v) => v.name.includes("Google") || v.default);
+    if (voice) utterance.voice = voice;
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Format AI response as you already have
   const formatAIResponse = (result: any): string => {
     if (!result) return "Sorry, no response from the backend.";
 
@@ -30,22 +58,22 @@ export function AgentInterface() {
         case "weather": {
           const info = result.weatherInfo;
           return (
-            `🌤️ **Weather Update for ${info.location}**\n\n` +
-            `- Temperature: ${info.temperature}\n` +
-            `- Feels Like: ${info.feelsLike}\n` +
-            `- Condition: ${info.description}\n` +
-            `- Humidity: ${info.humidity}\n` +
-            `- Wind Speed: ${info.windSpeed}`
+            `🌤️ Weather Update for ${info.location}\n` +
+            `Temperature: ${info.temperature}\n` +
+            `Feels Like: ${info.feelsLike}\n` +
+            `Condition: ${info.description}\n` +
+            `Humidity: ${info.humidity}\n` +
+            `Wind Speed: ${info.windSpeed}`
           );
         }
 
         case "advice": {
           const { topic, advice } = result.ans;
-          return `🧠 **Advice on "${topic}"**\n\n${advice}`;
+          return `🧠 Advice on "${topic}"\n${advice}`;
         }
 
         case "news": {
-          return `📰 **Top News Headlines on ${result.topic}**\n\n${result.news}`;
+          return `📰 Top News Headlines on ${result.topic}\n${result.news}`;
         }
 
         case "email": {
@@ -53,9 +81,8 @@ export function AgentInterface() {
         }
 
         default: {
-          // Generic key-value output for unknown types
           return Object.entries(result)
-            .map(([key, value]) => `**${key}:** ${value}`)
+            .map(([key, value]) => `${key}: ${value}`)
             .join("\n");
         }
       }
@@ -107,6 +134,11 @@ export function AgentInterface() {
 
       if (soundEnabled && audioFeedbackRef.current) {
         audioFeedbackRef.current.playReceiveSound();
+      }
+
+      // Speak the assistant response aloud
+      if (soundEnabled) {
+        speak(aiContent);
       }
     } catch (error) {
       setMessages((prev) => [

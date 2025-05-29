@@ -1,3 +1,4 @@
+// CommandInput.tsx
 import { useState, useRef, useEffect } from "react";
 import { Mic, Send, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";

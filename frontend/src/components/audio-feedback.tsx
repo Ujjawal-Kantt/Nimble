@@ -1,63 +1,39 @@
-import React, { forwardRef, useImperativeHandle } from "react";
+// AudioFeedback.tsx
+import React, { forwardRef, useImperativeHandle, useRef } from "react";
 
-export interface AudioFeedbackRef {
+export interface AudioFeedbackHandle {
   playSendSound: () => void;
   playReceiveSound: () => void;
 }
 
-export const AudioFeedback = forwardRef<AudioFeedbackRef, {}>((_, ref) => {
-  // Audio context for creating sounds programmatically
-  const createAudioContext = () => {
-    return new (window.AudioContext || (window as any).webkitAudioContext)();
-  };
+export const AudioFeedback = forwardRef<AudioFeedbackHandle>((props, ref) => {
+  const sendAudioRef = useRef<HTMLAudioElement>(null);
+  const receiveAudioRef = useRef<HTMLAudioElement>(null);
 
-  // Create a beep sound with given parameters
-  const createBeep = (
-    frequency: number,
-    duration: number,
-    volume: number,
-    type: OscillatorType = "sine"
-  ) => {
-    try {
-      const audioContext = createAudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
-      oscillator.connect(gainNode);
-
-      gainNode.connect(audioContext.destination);
-      gainNode.gain.value = volume;
-
-      // Add fade out
-      gainNode.gain.exponentialRampToValueAtTime(
-        0.01,
-        audioContext.currentTime + duration
-      );
-
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + duration);
-    } catch (error) {
-      console.error("Audio error:", error);
-    }
-  };
-
-  // Send message sound (higher pitch)
-  const playSendSound = () => {
-    createBeep(880, 0.1, 0.1, "sine"); // A5 note
-  };
-
-  // Receive message sound (lower pitch)
-  const playReceiveSound = () => {
-    createBeep(440, 0.15, 0.1, "sine"); // A4 note
-  };
-
-  // Expose functions through ref
   useImperativeHandle(ref, () => ({
-    playSendSound,
-    playReceiveSound,
+    playSendSound() {
+      if (sendAudioRef.current) {
+        sendAudioRef.current.currentTime = 0;
+        sendAudioRef.current.play().catch(() => {
+          // Handle play errors silently
+        });
+      }
+    },
+    playReceiveSound() {
+      if (receiveAudioRef.current) {
+        receiveAudioRef.current.currentTime = 0;
+        receiveAudioRef.current.play().catch(() => {
+          // Handle play errors silently
+        });
+      }
+    },
   }));
 
-  return null; // No visible component
+  return (
+    <>
+      {/* You can replace these with your preferred sound files */}
+      <audio ref={sendAudioRef} src="/sounds/send.mp3" preload="auto" />
+      <audio ref={receiveAudioRef} src="/sounds/receive.mp3" preload="auto" />
+    </>
+  );
 });
