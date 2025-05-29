@@ -16,7 +16,7 @@ export function ResponseArea({ messages, isProcessing }: ResponseAreaProps) {
   }, [messages]);
 
   return (
-    <div className="space-y-6 py-4 pb-8">
+    <div className="space-y-6 py-4 pb-8 ">
       {messages.map((message) => (
         <MessageItem key={message.id} message={message} />
       ))}

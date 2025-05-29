@@ -22,7 +22,7 @@ async function getWeather(city) {
             windSpeed: `${data.wind.speed} m/s`
         };
 
-        return weatherInfo;
+        return { type: "weather", weatherInfo };
     } catch (error) {
         console.error('Error fetching weather:', error.message);
         throw new Error('Could not fetch weather data. Please check the city name.');

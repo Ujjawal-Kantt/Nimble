@@ -37,8 +37,11 @@ Prompt:
 
         // Step 3: Send the email
         await transporter.sendMail(mailOptions);
-
-        return 'Email drafted and sent successfully!';
+        const successMessage = `Hurray! Your Email is drafted and sent successfully to ${receiverMail}.`;
+        return {
+            type: "email",
+            message: successMessage
+        };
     } catch (error) {
         console.error('Error in draftEmail:', error);
         throw new Error('Failed to draft and send the email');

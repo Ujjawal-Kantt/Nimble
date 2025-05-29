@@ -17,7 +17,7 @@ async function getNews(topic = 'general') {
             return `${idx + 1}. **${article.title}**\n${article.description}\n🔗 [Read more](${article.url})\n`;
         }).join('\n');
 
-        return `📰 Top News for "${topic}":\n\n${newsList}`;
+        return { type: "news", topic: topic, news: newsList };
     } catch (error) {
         console.error('Error fetching news:', error.message);
         throw new Error('Could not fetch news. Try again later.');

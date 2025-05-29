@@ -18,6 +18,51 @@ export function AgentInterface() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioFeedbackRef = useRef<AudioFeedback>(null);
+  const formatAIResponse = (result: any): string => {
+    if (!result) return "Sorry, no response from the backend.";
+
+    if (typeof result === "string") return result;
+
+    if (typeof result === "object") {
+      const { type } = result;
+
+      switch (type) {
+        case "weather": {
+          const info = result.weatherInfo;
+          return (
+            `🌤️ **Weather Update for ${info.location}**\n\n` +
+            `- Temperature: ${info.temperature}\n` +
+            `- Feels Like: ${info.feelsLike}\n` +
+            `- Condition: ${info.description}\n` +
+            `- Humidity: ${info.humidity}\n` +
+            `- Wind Speed: ${info.windSpeed}`
+          );
+        }
+
+        case "advice": {
+          const { topic, advice } = result.ans;
+          return `🧠 **Advice on "${topic}"**\n\n${advice}`;
+        }
+
+        case "news": {
+          return `📰 **Top News Headlines on ${result.topic}**\n\n${result.news}`;
+        }
+
+        case "email": {
+          return `📧 ${result.message}`;
+        }
+
+        default: {
+          // Generic key-value output for unknown types
+          return Object.entries(result)
+            .map(([key, value]) => `**${key}:** ${value}`)
+            .join("\n");
+        }
+      }
+    }
+
+    return "Sorry, I couldn't understand the response format.";
+  };
 
   const handleSendMessage = async (
     content: string,
@@ -40,32 +85,42 @@ export function AgentInterface() {
     setMessages((prev) => [...prev, userMessage]);
     setIsProcessing(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:5000/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: content }),
+      });
+
+      const data = await response.json();
+
+      let aiContent = formatAIResponse(data?.result);
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: generateResponse(content),
+        content: aiContent,
         timestamp: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, aiResponse]);
-      setIsProcessing(false);
 
       if (soundEnabled && audioFeedbackRef.current) {
         audioFeedbackRef.current.playReceiveSound();
       }
-    }, 1500 + Math.random() * 1500);
-  };
-
-  const generateResponse = (input: string): string => {
-    const responses = [
-      `I've analyzed your request: "${input}". Here's what I found...`,
-      `Processing complete. Based on "${input}", I recommend considering...`,
-      `Interesting query. After examining "${input}", I believe...`,
-      `I've computed several responses to "${input}". The optimal answer appears to be...`,
-      `According to my analysis of "${input}", the most relevant information is...`,
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: "There was an error connecting to the backend.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

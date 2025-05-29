@@ -23,7 +23,7 @@ Keep the advice clear and helpful. Return ONLY the advice text, no extra explana
             topic: topic,
             advice: cleanAdvice
         }
-        return ans;
+        return { type: "advice", ans };
     } catch (error) {
         console.error('Error generating advice from Gemini:', error.message);
         throw new Error('Could not generate advice at the moment.');
